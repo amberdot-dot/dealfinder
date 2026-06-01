@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { searchTrademe } from '@/lib/scrapers/trademe'
 import { searchRetailers } from '@/lib/scrapers/retailers'
 import { calculateDealScore, generateDealSummary } from '@/lib/ai/dealAnalyzer'
-import type { Category, SearchResult, PriceListing } from '@/types'
+import { parseSearchQuery } from '@/lib/ai/queryParser'
+import type { Category, SearchResult, PriceListing, ParsedSearch } from '@/types'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -14,29 +15,35 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    // Fetch from all sources in parallel
+    const parsed: ParsedSearch = await parseSearchQuery(query)
+
+    const effectiveCategory = (parsed.category !== 'all' ? parsed.category : category) as Category
+
     const [trademeListings, retailerListings] = await Promise.all([
-      searchTrademe(query, category),
-      searchRetailers(query),
+      searchTrademe(query, effectiveCategory),
+      searchRetailers(query, parsed),
     ])
 
     const allListings: PriceListing[] = [...trademeListings, ...retailerListings]
 
-    // Score all listings
     const scoredListings = allListings.map((listing) => {
-      const { score, rating } = calculateDealScore(listing, allListings)
-      return { ...listing, deal_score: score, deal_rating: rating }
+      const { score, rating, reason } = calculateDealScore(listing, allListings)
+      return { ...listing, deal_score: score, deal_rating: rating, deal_reason: reason }
     })
 
-    // Group by product (simple grouping by source for now — in production, use embedding similarity)
-    const grouped = groupByProduct(scoredListings, query)
+    const grouped = buildResults(scoredListings, query, parsed, effectiveCategory)
 
-    // Generate AI summary
-    const aiSummary = await generateDealSummary(query, grouped)
+    grouped.sort((a, b) => {
+      const order = { great: 0, good: 1, fair: 2, poor: 3 }
+      return order[a.deal_rating] - order[b.deal_rating]
+    })
+
+    const aiSummary = await generateDealSummary(query, grouped, parsed)
 
     return NextResponse.json({
       query,
-      category,
+      category: effectiveCategory,
+      parsed_query: parsed,
       results: grouped,
       ai_summary: aiSummary,
       total: grouped.length,
@@ -48,14 +55,18 @@ export async function GET(req: NextRequest) {
   }
 }
 
-function groupByProduct(listings: PriceListing[], query: string): SearchResult[] {
-  // Simple implementation: each unique listing becomes a result
-  // In production: use embeddings to match listings to canonical products
+function buildResults(
+  listings: PriceListing[],
+  query: string,
+  parsed: ParsedSearch,
+  category: Category
+): SearchResult[] {
+  const prices = listings.map((l) => l.price)
+  const avgPrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0
+
   return listings.map((listing) => {
-    const prices = listings.map((l) => l.price)
-    const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length
-    const savings = listing.original_price
-      ? listing.original_price - listing.price
+    const savings = listing.original_price && listing.original_price > listing.price
+      ? Math.round(listing.original_price - listing.price)
       : avgPrice > listing.price
       ? Math.round(avgPrice - listing.price)
       : null
@@ -66,7 +77,7 @@ function groupByProduct(listings: PriceListing[], query: string): SearchResult[]
         name: listing.listing_title,
         brand: extractBrand(listing.listing_title),
         model: listing.listing_title,
-        category: 'all' as Category,
+        category,
         image_url: null,
         description: null,
         created_at: new Date().toISOString(),
@@ -76,14 +87,20 @@ function groupByProduct(listings: PriceListing[], query: string): SearchResult[]
       best_source: listing.source,
       avg_market_price: Math.round(avgPrice),
       ai_summary: null,
-      deal_rating: listing.deal_rating || 'fair',
+      deal_rating: listing.deal_rating ?? 'fair',
       savings,
+      deal_reason: listing.deal_reason,
+      parsed_query: parsed,
     }
   })
 }
 
 function extractBrand(title: string): string {
-  const brands = ['Samsung', 'LG', 'Fisher & Paykel', 'Bosch', 'Electrolux', 'Haier', 'Panasonic', 'Miele', 'Whirlpool', 'Westinghouse']
+  const brands = [
+    'Samsung', 'LG', 'Fisher & Paykel', 'Bosch', 'Electrolux', 'Haier', 'Panasonic',
+    'Miele', 'Whirlpool', 'Westinghouse', 'Apple', 'Sony', 'Toyota', 'Honda',
+    'Mitsubishi', 'Dyson', 'Makita', 'DeWalt', 'Milwaukee',
+  ]
   for (const brand of brands) {
     if (title.toLowerCase().includes(brand.toLowerCase())) return brand
   }

@@ -1,17 +1,97 @@
-export type Source = 'trademe' | 'harvey_norman' | 'noel_leeming' | 'themarket' | 'pb_tech'
+export type Source =
+  | 'trademe'
+  | 'harvey_norman'
+  | 'noel_leeming'
+  | 'bond_and_bond'
+  | 'briscoes'
+  | 'the_warehouse'
+  | 'my_appliances'
+  | 'pb_tech'
+  | 'jb_hifi'
+  | 'spark'
+  | 'two_degrees'
+  | 'turners'
+  | 'freedom'
+  | 'early_settler'
+  | 'mocka'
+  | 'mitre10'
+  | 'bunnings'
+  | 'themarket'
 
 export type DealRating = 'great' | 'good' | 'fair' | 'poor'
 
 export type Category =
+  | 'whiteware'
   | 'washing-machines'
   | 'dryers'
   | 'fridges'
-  | 'freezers'
   | 'dishwashers'
   | 'ovens'
-  | 'microwaves'
+  | 'rangehoods'
+  | 'electronics'
+  | 'tvs'
+  | 'laptops'
+  | 'phones'
+  | 'tablets'
+  | 'cameras'
+  | 'audio'
+  | 'gaming'
+  | 'cars'
+  | 'cars-under-10k'
+  | 'cars-10k-20k'
+  | 'cars-20k-40k'
+  | 'cars-40k-plus'
+  | 'electric-vehicles'
+  | 'home-and-garden'
+  | 'furniture'
+  | 'outdoor'
+  | 'tools'
+  | 'appliances'
   | 'vacuum-cleaners'
+  | 'air-conditioning'
+  | 'heat-pumps'
+  | 'water-heating'
   | 'all'
+
+export interface ParsedSearch {
+  category: string
+  keywords: string[]
+  max_price: number | null
+  min_price: number
+  features: string[]
+  finance_required: boolean
+  delivery_required: boolean
+  brands_preferred: string[]
+  brands_excluded: string[]
+  condition: 'new'
+  summary: string
+}
+
+export interface ScraperResult {
+  source: Source
+  listing_title: string
+  price: number
+  original_price: number | null
+  url: string
+  image_url: string | null
+  in_stock: boolean
+  delivery_available: boolean
+  delivery_cost: number | null
+  finance_available: boolean
+  finance_rate: string | null
+  warranty_months: number | null
+  bonus_offers: string[]
+  fetched_at: string
+}
+
+export interface DealFactors {
+  price_vs_market: number
+  finance_rate: number
+  delivery_included: boolean
+  warranty_length: number
+  bonus_offers_value: number
+  retailer_reputation: number
+}
 
 export interface Product {
   id: string
@@ -39,6 +119,13 @@ export interface PriceListing {
   fetched_at: string
   deal_score: number | null
   deal_rating: DealRating | null
+  delivery_available: boolean
+  delivery_cost: number | null
+  finance_available: boolean
+  finance_rate: string | null
+  warranty_months: number | null
+  bonus_offers: string[]
+  deal_reason: string | null
 }
 
 export interface SearchResult {
@@ -50,6 +137,8 @@ export interface SearchResult {
   ai_summary: string | null
   deal_rating: DealRating
   savings: number | null
+  deal_reason: string | null
+  parsed_query: ParsedSearch | null
 }
 
 export interface PriceAlert {
@@ -70,3 +159,14 @@ export interface User {
 }
 
 export type SortOption = 'price_asc' | 'price_desc' | 'deal_rating' | 'newest'
+
+export interface Membership {
+  id: string
+  user_id: string
+  plan: 'monthly' | 'annual'
+  status: 'active' | 'cancelled' | 'trialing'
+  started_at: string
+  renews_at: string | null
+  stripe_customer_id: string | null
+  stripe_subscription_id: string | null
+}

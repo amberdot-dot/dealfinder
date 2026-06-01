@@ -2,38 +2,107 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
 @layer base {
   :root {
-    --brand-gradient: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+    --background: #FAFAF8;
+    --foreground: #0F0F0A;
+    --card: #FFFFFF;
+    --border: #EAEAE4;
+    --muted: #888878;
+    --accent: #E07248;
+    --accent-light: #FDF5F0;
   }
 
   * {
     box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html {
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply text-gray-900 antialiased;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  ::selection {
+    background: #E07248;
+    color: white;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-ink-900 text-white text-sm font-semibold rounded-xl hover:bg-ink-800 transition-all duration-200 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-ink-800 text-sm font-semibold rounded-xl border border-ink-200 hover:border-ink-400 hover:bg-ink-50 transition-all duration-200 active:scale-95;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-clay-500 text-white text-sm font-semibold rounded-xl hover:bg-clay-600 transition-all duration-200 active:scale-95;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl border border-ink-100 shadow-card hover:shadow-card-hover transition-all duration-300;
+  }
+
+  .label {
+    @apply text-2xs font-bold uppercase tracking-widest text-ink-400;
+  }
+
+  .deal-badge-great {
+    @apply bg-sage-50 text-sage-700 border border-sage-200;
+  }
+
+  .deal-badge-good {
+    @apply bg-blue-50 text-blue-700 border border-blue-200;
+  }
+
+  .deal-badge-fair {
+    @apply bg-amber-50 text-amber-700 border border-amber-200;
+  }
+
+  .deal-badge-poor {
+    @apply bg-red-50 text-red-600 border border-red-200;
   }
 }
 
 @layer utilities {
-  .brand-gradient {
-    background: var(--brand-gradient);
+  .text-balance {
+    text-wrap: balance;
   }
 
-  .deal-great {
-    @apply text-green-700 bg-green-50 border-green-200;
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
-  .deal-good {
-    @apply text-lime-700 bg-lime-50 border-lime-200;
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
-  .deal-fair {
-    @apply text-amber-700 bg-amber-50 border-amber-200;
+  .grid-masonry {
+    columns: 2;
+    column-gap: 1rem;
   }
 
-  .deal-poor {
-    @apply text-red-700 bg-red-50 border-red-200;
+  @media (min-width: 768px) {
+    .grid-masonry {
+      columns: 3;
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .grid-masonry {
+      columns: 4;
+    }
   }
 }
