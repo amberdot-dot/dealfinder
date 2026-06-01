@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand-gradient: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply text-gray-900 antialiased;
+  }
+}
+
+@layer utilities {
+  .brand-gradient {
+    background: var(--brand-gradient);
+  }
+
+  .deal-great {
+    @apply text-green-700 bg-green-50 border-green-200;
+  }
+
+  .deal-good {
+    @apply text-lime-700 bg-lime-50 border-lime-200;
+  }
+
+  .deal-fair {
+    @apply text-amber-700 bg-amber-50 border-amber-200;
+  }
+
+  .deal-poor {
+    @apply text-red-700 bg-red-50 border-red-200;
+  }
+}
